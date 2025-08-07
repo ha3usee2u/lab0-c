@@ -274,20 +274,21 @@ int q_ascend(struct list_head *head)
     if (list_is_singular(head))
         return 1;
 
-    q_reverse(head);
+    element_t *cur;
+    const char *min = NULL;
+    struct list_head *node = head->prev;
 
-    element_t *cur, *n;
-    const char *max = NULL;
-    list_for_each_entry_safe(cur, n, head, list) {
-        if (!max || strcmp(cur->value, max) >= 0) {
-            max = cur->value;
+    while (node != head) {
+        cur = list_entry(node, element_t, list);
+        node = node->prev;
+
+        if (!min || strcmp(cur->value, min) <= 0) {
+            min = cur->value;
         } else {
             list_del(&cur->list);
             q_release_element(cur);
         }
     }
-
-    q_reverse(head);
 
     return q_size(head);
 }
@@ -301,20 +302,21 @@ int q_descend(struct list_head *head)
     if (list_is_singular(head))
         return 1;
 
-    q_reverse(head);
+    element_t *cur;
+    const char *max = NULL;
+    struct list_head *node = head->prev;
 
-    element_t *cur, *n;
-    const char *min = NULL;
-    list_for_each_entry_safe(cur, n, head, list) {
-        if (!min || strcmp(cur->value, min) <= 0) {
-            min = cur->value;
+    while (node != head) {
+        cur = list_entry(node, element_t, list);
+        node = node->prev;
+
+        if (!max || strcmp(cur->value, max) >= 0) {
+            max = cur->value;
         } else {
             list_del(&cur->list);
             q_release_element(cur);
         }
     }
-
-    q_reverse(head);
 
     return q_size(head);
 }
