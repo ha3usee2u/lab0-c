@@ -75,13 +75,13 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
         return NULL;
 
     element_t *e = list_first_entry(head, element_t, list);
-    if (!sp)
-        return NULL;
+    if (sp && e->value) {
+        size_t len = bufsize - 1;
+        memcpy(sp, e->value, len);
+        sp[len] = '\0';  // Ensure null termination
+    }
 
-    strncpy(sp, e->value, bufsize - 1);
-    sp[bufsize - 1] = '\0';  // Ensure null termination
-    list_del(head->next);
-
+    list_del(&e->list);
     return e;
 }
 
@@ -92,13 +92,13 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
         return NULL;
 
     element_t *e = list_last_entry(head, element_t, list);
-    if (!sp)
-        return NULL;
+    if (sp && e->value) {
+        size_t len = bufsize - 1;
+        memcpy(sp, e->value, len);
+        sp[len] = '\0';  // Ensure null termination
+    }
 
-    strncpy(sp, e->value, bufsize - 1);
-    sp[bufsize - 1] = '\0';  // Ensure null termination
-    list_del(head->prev);
-
+    list_del(&e->list);
     return e;
 }
 
@@ -323,6 +323,29 @@ int q_descend(struct list_head *head)
  * order */
 int q_merge(struct list_head *head, bool descend)
 {
-    // https://leetcode.com/problems/merge-k-sorted-lists/
-    return 0;
+    if (!head || list_empty(head))
+        return 0;
+
+    struct list_head *cur;
+    queue_contex_t *target = list_first_entry(head, queue_contex_t, chain);
+    struct list_head *merged = target->q;
+
+    list_for_each(cur, head) {
+        queue_contex_t *ctx = list_entry(cur, queue_contex_t, chain);
+        if (ctx == target)
+            continue;
+
+        const struct list_head *q = ctx->q;
+        if (!q || list_empty(q))
+            continue;
+
+        element_t *e, *safe;
+        list_for_each_entry_safe(e, safe, q, list) {
+            list_del(&e->list);
+            list_add_tail(&e->list, merged);
+        }
+    }
+
+    q_sort(merged, descend);
+    return q_size(merged);
 }
